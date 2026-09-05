@@ -5,8 +5,7 @@ of the 42 curriculum by mradkovi_.
 
 ## Description
 `Get next line` is a function that returns a line read from a file descriptor.
-
-It can be used to read files or to read standard input line by line. 
+It uses a **static variable** to temporarily store content from the file descriptor.
 
 ### Project Files
 - **get_next_line.c** is the main file containing the get_next_line function and all its helper functions.
@@ -35,6 +34,23 @@ Including the header file:
 Compile:
 ```bash
 gcc -Wall -Werror -Wextra -D BUFFER_SIZE=<n> get_next_line.c get_next_line_utils.c 
+```
+`BUFFER_SIZE` is defined during the compilation
+_( -D BUFFER_SIZE=42 )_
+
+## Bonus part
+This version of get_next_line can manage multiple file descriptors at the same time. 
+It contains the same files and functions. The only difference is that the main function, `get_next_line`, uses a **static array**.
+
+### Instructions
+
+Including the header file:
+```c
+#include "get_next_line_bonus.h"
+```
+Compile:
+```bash
+gcc -Wall -Werror -Wextra -D BUFFER_SIZE=<n> get_next_line_bonus.c get_next_line_utils_bonus.c 
 ```
 `BUFFER_SIZE` is defined during the compilation
 _( -D BUFFER_SIZE=42 )_
