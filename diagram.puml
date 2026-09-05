@@ -1,0 +1,141 @@
+@startuml
+<style>
+document {
+  BackGroundColor Lavender
+  ActivityDiamondFontSize 14
+  ActivityFontSize 14
+  
+}
+root {
+  FontColor black
+  LineColor black
+}
+activity {
+    BackGroundColor White
+}
+</style>
+
+title Get_Next_Line 
+
+legend top
+<b>Variables:</b>
+
+**char *buffer** - for loading data read from read();
+
+**ssize_t bytes_read** - for counting bytes read (can take negative values);
+
+**static char *static_storage** - keep its value across multiple function calls
+    for temporary storage of data from the buffer
+    A static variable is automatically initialized to zero when the program is compiled.
+    It does not contain random characters from memory.;
+
+**char *swap**
+    for temporary data storage
+    old pointer so we can free
+
+**char *line**
+    for storing a single line from the file
+    get_next_line output
+endlegend
+
+partition "char *get_next_line(int fd)" #LavenderBlush {
+start
+if (fd < 0 || BUFFER_SIZE <= 0) then (true)
+    :return (NULL);
+    stop
+endif
+
+:static_storage = **read_file** (fd, static_storage);
+if (static_storage == NULL) then (true)
+    :return (NULL);
+    stop
+endif
+
+:line = **extract_new_line** (static_storage);
+:static_storage = **trim_static_storage**(static_storage);
+
+:return (line);
+stop
+}
+partition "char *error_read(char *static_storage, char *buffer)" #LavenderBlush {
+    start
+    :**free**(buffer);
+    :**free**(static_storage);
+    :return (NULL);
+    stop
+}
+partition "char *read_file(int fd, char *static_storage)" #LavenderBlush {
+start
+    :buffer = (char *)**malloc**(sizeof(char) * (BUFFER_SIZE + 1));
+    note right: **BUFFER SIZE** is defined during compilation (+1 is for '\0')\ncompile with **cc -Wall -Wextra -Werror -D BUFFER_SIZE=42 <files>.c**;
+    if ((buffer == NULL)) is (true) then
+        :return (NULL);
+        stop
+    else (false)
+        if ((static_storage == NULL)) then (true)
+            :static_storage = **ft_strdup("")**;
+            note right: in static_storage is now **'\0'** (empty string)
+        endif
+endif
+
+    :bytes_read = 1;
+
+    while (!(**ft_strchr**(static_storage, '\\n')) AND (bytes_read > 0)) is (true)
+    note right: The loop continues until it finds the **end of the line (\\n)**\nor the **end of the file (EOF)**.
+        :bytes_read = **read**(fd, buffer, BUFFER_SIZE);
+        if (bytes_read == -1) then (true)
+            :return(**read_file_error**(static_storage, buffer));
+            stop
+endif
+        :buffer[bytes_read] = '\0';
+        note right: adding the end of the string read from the buffer.
+        :swap = static_storage;
+        note right:  memmory leak prevention
+    :static_storage = **ft_strjoin**(swap, buffer);
+:**free**(swap);
+    endwhile
+    :**free**(buffer);
+    :return (static_storage);
+    stop
+}
+
+partition "char *extract_new_line(char *static_storage)" #LavenderBlush {
+start
+    if (static_storage[0] == '\0') then (true)
+        :return (NULL);
+        stop
+    endif
+
+    :i = 0;
+    while (static_storage[i] != '\0' AND static_storage[i] != '\\n') is (true)
+        :i++;
+    endwhile
+
+    if (static_storage[i] == '\\n') then (true)
+        :i++;
+    endif
+    :line = **ft_substr**(static_storage, 0, i);
+    :return (line);
+    stop
+}
+
+partition "char *trim_static_storage(char *static_storage)" #LavenderBlush {
+    start
+    :position = **ft_strchr**(static_storage, '\\n');
+    note right: If the string **does not contain new line** \nthe entire remainder is stored\nStatic storage will be set to **NULL**.
+    if (position == NULL) then (true)
+        :**free**(static_storage);
+        :return (NULL);
+        stop
+    endif
+
+    :swap = static_storage;
+    note right: memmory leak prevention
+    :static_storage = **ft_strdup**(position + 1);
+    :**free**(swap);
+
+    :return (static_storage);
+    stop
+}
+
+@enduml
